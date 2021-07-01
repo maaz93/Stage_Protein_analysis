@@ -149,7 +149,7 @@ def alpha_turn_1(aa_pos_decoupee , aa_seq, classical_s, chain_debut_fin_index, x
             else:
                 if (len(find_holes([aa_pos_decoupee[a][b],aa_pos_decoupee[a][b+1],aa_pos_decoupee[a][b+2],aa_pos_decoupee[a][b+3],aa_pos_decoupee[a][b+4]])) ==0):
                     if(distance(x[i],y[i],z[i],x[i+4],y[i+4],z[i+4]) < 7):
-                        if(classical_s[i] == 'E' and classical_s[i+1] != 'H' and classical_s[i+2] != 'H' and classical_s[i+3] != 'H' and classical_s[i+4] == 'E'):
+                        if(classical_s[i+1] == 'C' and classical_s[i+2] == 'C' and classical_s[i+3] == 'C' ):
                             chaine_turn.append(chaine_actuelle)
                             seq.append([aa_pos_decoupee[a][b],aa_pos_decoupee[a][b+1],aa_pos_decoupee[a][b+2],aa_pos_decoupee[a][b+3],aa_pos_decoupee[a][b+4]])
                             print([phi[i+1],phi[i+2],phi[i+3]])

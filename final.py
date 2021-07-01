@@ -8,6 +8,7 @@ from parse_gturn import *
 from parse_bbulge import *
 from protein_blocs import *
 from alpha_turn import *
+from common_output_chain import *
 from math import log10
 import sys
 import os
@@ -35,8 +36,10 @@ def common_output(pdb_file, dssp_file, dssp2_file, stride_file,sst_file,bturn_fi
     dssp2_struct_seq= parse_dssp_pp2(dssp2_file,args)
 
     #recupere les donnee promotif_sst
-    aa_pos_promotif, aa_seq_promotif,promotif_struct_seq,chain_ID_promotif= parse_promotif_sst(sst_file,args)
+    aa_pos_promotif, aa_seq_promotif,promotif_struct_seq,chain_ID_promotif,omega= parse_promotif_sst(sst_file,args)
     print(len(aa_seq_promotif))
+    print(omega)
+    omega = [float(i) for i in omega]
     
     #recupere les missing residues de la pdb
     missing_seq,missing_seq_chain= missing_residues(pdb_file)
@@ -324,9 +327,31 @@ def main():
         bturn_file =  args[1] + ".bturns"
         gturn_file =  args[1] + ".gturns"
         bbulge_file =  args[1] + ".blg"
-        common_output(pdb_file, dssp_file, dssp2_file, stride_file, sst_file, bturn_file, gturn_file, bbulge_file,args) 
+        common_output_chain("A",pdb_file, dssp_file, dssp2_file, stride_file, sst_file, bturn_file, gturn_file, bbulge_file,args) 
     else:
         print("fichier {}.pdb incorrect".format(args[1]))
+
+
+
+
+
+def single_word(string):
+    # Check input does not contain spaces
+    if (string[-4:]!= ".pdb"):
+        msg = f'\"{string}\" is not a pdb file'
+        raise argparse.ArgumentTypeError(msg)
+    return string
+
+
+def main1():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-i", type=single_word)
+
+    parser.add_argument("-c",dest ="chain",choices = len("chain")==5)
+    
+    args = parser.parse_args()
+    print(args)
+    print(args.c)
 
 main()
 exit(0)
