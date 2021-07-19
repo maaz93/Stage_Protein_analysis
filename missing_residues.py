@@ -79,11 +79,11 @@ def find_if_missing(chain_id,position,missing_seq,missing_seq_chain):
 def compare_seq( pos_base, sequence_base, pos_test,sequence_test):
 	#liste des positions ou la sequence n'est pas identique
 	pos_difference=[]
-
-	for i in range(len(pos_base)):
-		if pos_base[i] == pos_test[i]:
-			if sequence_base[i] != sequence_test[i]:
-				pos_difference.append(i)
+	if(len(pos_base)==len(pos_test)):
+		for i in range(len(pos_base)):
+			if pos_base[i] == pos_test[i]:
+				if sequence_base[i] != sequence_test[i]:
+					pos_difference.append(i)
 	return pos_difference 
 
 

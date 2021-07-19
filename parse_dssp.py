@@ -33,7 +33,7 @@ def parse_dssp(dssp_file,args):
                 aa_pos.append(line[6:10])
                 chain_ID_seq += line[11]
 
-                if aa_code in aa_code_list:
+                if aa_code.upper() in aa_code_list:
                     aa_seq += aa_code
                 elif aa_code == " ":
                     aa_seq += " "

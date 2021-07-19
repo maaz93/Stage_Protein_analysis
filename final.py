@@ -17,7 +17,7 @@ n = lambda x : int(log10(x))+1
 
 
 def common_output(pdb_file, dssp_file, dssp2_file, stride_file,sst_file,bturn_file, gturn_file, bbulge_file,args):
-    common_file_parsed = "final_output_"+args[1] +".txt"
+    common_file_parsed = "final_output_"+args.i[0:-4] +".txt"
 
     #recupere les donnee dssp
     aa_pos, chain_ID_seq, aa_seq, dssp_struct_seq,phi,psi ,xpos,ypos,zpos,classical_s= parse_dssp(dssp_file,args)
@@ -65,8 +65,9 @@ def common_output(pdb_file, dssp_file, dssp2_file, stride_file,sst_file,bturn_fi
     alphabet_structurale=all_blocks(aa_pos_decoupee , chain_debut_fin, chain_debut_fin_index, phi, psi)
     print(alphabet_structurale)
 
-    test=alpha_turn_1(aa_pos_decoupee ,aa_seq, classical_s, chain_debut_fin_index, xpos, ypos, zpos, phi , psi, args)
-    print(test)
+    #alpha-turn 
+    chain_ID_aturn, aa_pos_aturn, aturn_type ,=alpha_turn_1(aa_pos_decoupee ,aa_seq, classical_s, chain_debut_fin_index, xpos, ypos, zpos, phi , psi,omega, args)
+
 
     for i in range (len(missing_seq_chain)):
         chaine=chain_debut_fin_index.index(missing_seq_chain[i])//3
@@ -130,19 +131,87 @@ def common_output(pdb_file, dssp_file, dssp2_file, stride_file,sst_file,bturn_fi
     if(len(aa_pos_bturn)>0):
         other_struct+=aa_pos_bturn
 
-    #bturns type IV 
-    new_bturns=recup_new_bturns(bturn_sequence, aa_pos_bturn, bturn_type ,chain_ID_bturn,phi,psi,aa_pos,chain_debut_fin_index)
-    print(new_bturns)
+        chain_debut_fin_bturn=find_chains_bturn(aa_pos_bturn, chain_ID_bturn)
+        chain_debut_fin_index_bturn=find_chains_index_bturn(aa_pos_bturn, chain_ID_bturn)
+        print(chain_debut_fin_bturn)
+        print(chain_debut_fin_index_bturn)
 
+        #decoupage de la liste de positions par chaine bturn
+        aa_pos_decoupee_bturn=[]
+        bturn_type_decoupee=[]
+
+        for i in range(len(chain_debut_fin_index_bturn)//3):
+            aa_pos_decoupee_bturn.append(aa_pos_bturn[chain_debut_fin_index_bturn[i*3+1]:(chain_debut_fin_index_bturn[i*3+2]+1)])
+            bturn_type_decoupee.append(bturn_type[chain_debut_fin_index_bturn[i*3+1]//4:(chain_debut_fin_index_bturn[i*3+2]+1)//4])
+
+        print(aa_pos_decoupee_bturn)
+
+        #bturns type IV 
+        new_bturns=recup_new_bturns(bturn_sequence, aa_pos_bturn, bturn_type ,chain_ID_bturn,phi,psi,aa_pos,chain_debut_fin_index)
+        print(new_bturns)
+    else:
+        chain_debut_fin_bturn=[]
+        chain_debut_fin_index_bturn=[]
+    
     #gamma-turn
     gturn_sequence, aa_pos_gturn, gturn_type ,chain_ID_gturn = parse_promotif_gturn(gturn_file,args)
     aa_pos_gturn=[int(i) for i in aa_pos_gturn]
+    aa_pos_decoupee_gturn=[]
+    gturn_type_decoupee=[]
 
     if(len(aa_pos_gturn)>0):
         other_struct+=aa_pos_gturn
 
+        chain_debut_fin_gturn=find_chains_gturn(aa_pos_gturn, chain_ID_gturn)
+        chain_debut_fin_index_gturn=find_chains_index_gturn(aa_pos_gturn, chain_ID_gturn)
+        print(chain_debut_fin_gturn)
+        print(chain_debut_fin_index_gturn)
+
+        #decoupage de la liste de positions par chaine gturn
+        
+        for i in range(len(chain_debut_fin_index_gturn)//3):
+            aa_pos_decoupee_gturn.append(aa_pos_gturn[chain_debut_fin_index_gturn[i*3+1]:(chain_debut_fin_index_gturn[i*3+2]+1)])
+            gturn_type_decoupee.append(gturn_type[chain_debut_fin_index_gturn[i*3+1]//3:(chain_debut_fin_index_gturn[i*3+2]+1)//3])
+
+        print(aa_pos_decoupee_gturn)
+    else:
+        chain_debut_fin_gturn=[]
+        chain_debut_fin_index_gturn=[]
+
+    #alpha-turn
+    aa_pos_decoupee_aturn=[]
+    aturn_type_decoupee=[]
+
+    if(len(aa_pos_aturn)>0):
+        other_struct+=aa_pos_aturn
+
+        chain_debut_fin_aturn=find_chains_aturn(aa_pos_aturn, chain_ID_aturn)
+        chain_debut_fin_index_aturn=find_chains_index_aturn(aa_pos_aturn, chain_ID_aturn)
+        print(chain_debut_fin_aturn)
+        print(chain_debut_fin_index_aturn)
+
+        #decoupage de la liste de positions par chaine aturn
+        
+        for i in range(len(chain_debut_fin_index_aturn)//3):
+            aa_pos_decoupee_aturn.append(aa_pos_aturn[chain_debut_fin_index_aturn[i*3+1]:(chain_debut_fin_index_aturn[i*3+2]+1)])
+            aturn_type_decoupee.append(aturn_type[chain_debut_fin_index_aturn[i*3+1]//5:(chain_debut_fin_index_aturn[i*3+2]+1)//5])
+
+        print(aa_pos_decoupee_aturn)
+    else:
+        chain_debut_fin_aturn=[]
+        chain_debut_fin_index_aturn=[]
+
+
+    bturn_list,bturntype_list=getlistbturn(aa_pos_decoupee_w_miss, aa_pos_decoupee_bturn,bturn_type_decoupee,new_bturns, missing_seq,missing_seq_chain,chain_debut_fin_index,chain_debut_fin_bturn )
+    gturn_list,gturntype_list=getlistgturn(aa_pos_decoupee_w_miss, aa_pos_decoupee_gturn,gturn_type_decoupee, missing_seq,missing_seq_chain,chain_debut_fin_index,chain_debut_fin_gturn )
+    aturn_list,aturntype_list=getlistaturn(aa_pos_decoupee_w_miss, aa_pos_decoupee_aturn,aturn_type_decoupee, missing_seq,missing_seq_chain,chain_debut_fin_index,chain_debut_fin_aturn )
+    print(bturn_list)
+    print(bturntype_list)
+
+
+
     #beta-bulges
-    x_seq_bbulge, x_pos_bbulge, first_seq_bbulge, first_pos_bbulge, second_seq_bbulge, second_pos_bbulge, bbluge_type, chain_ID_bbulge = parse_promotif_bbulge(bbulge_file,args)
+    """x_seq_bbulge, x_pos_bbulge, first_seq_bbulge, first_pos_bbulge, second_seq_bbulge, second_pos_bbulge, bbluge_type, chain_ID_bbulge = parse_promotif_bbulge(bbulge_file,args)
     x_pos_bbulge=[int(i) for i in x_pos_bbulge]
     first_pos_bbulge=[int(i) for i in first_pos_bbulge]
     second_pos_bbulge=[int(i) for i in second_pos_bbulge]
@@ -150,7 +219,7 @@ def common_output(pdb_file, dssp_file, dssp2_file, stride_file,sst_file,bturn_fi
     if(len(x_pos_bbulge)>0):
         other_struct+=x_pos_bbulge
         other_struct+=first_pos_bbulge
-        other_struct+=second_pos_bbulge
+        other_struct+=second_pos_bbulge"""
 
     #cherche les positions qui ont deux assignations structurales speciales
     once = set()
@@ -158,6 +227,7 @@ def common_output(pdb_file, dssp_file, dssp2_file, stride_file,sst_file,bturn_fi
     twice = set( num for num in other_struct if num in once or seenOnce(num) )
     twice = list(twice)
 
+    print(other_struct,once,seenOnce,twice)
     flags=[int(i) for i in flags]
     #print(flags)
     with open(common_file_parsed, "w+") as file_out:
@@ -170,17 +240,17 @@ def common_output(pdb_file, dssp_file, dssp2_file, stride_file,sst_file,bturn_fi
                 k=i-x
                 #print(chaine_actuelle,aa_pos_decoupee_w_miss[a][b])
                 if find_if_missing(chaine_actuelle,aa_pos_decoupee_w_miss[a][b],missing_seq,missing_seq_chain)==True :
-                    file_out.write(" {} {} {} {} {} {} {}\n".format(missing_seq[x], "$","$", "$",
+                    file_out.write(" {} {} {} {} {} {} {}\n".format(writepos(missing_seq[x]), "$","$", "$",
                                                              "$", "$","$"))
                     x+=1
                     i+=1
                 else:
                     if k in flags:
                         
-                        file_out.write(" {} {} {} {} {} {} {} {}".format(aa_pos[k], chain_ID_seq[k], aa_seq[k], dssp_struct_seq[k],
-                                                             dssp2_struct_seq[k], stride_struct_seq[k], promotif_struct_seq[k],"#"))
+                        file_out.write(" {} {} {} {} {} {} {} {} {} {} {} {} {} {}\n".format(writepos(aa_pos[k]), chain_ID_seq[k], aa_seq[k], dssp_struct_seq[k],
+                                                             dssp2_struct_seq[k], stride_struct_seq[k], promotif_struct_seq[k],bturn_list[k],bturntype_list[k],gturn_list[k],gturntype_list[k],aturn_list[k],aturntype_list[k],"#"))
 
-                        if i+1 in aa_pos_bturn :
+                        """if i+1 in aa_pos_bturn :
                             if i+1 in twice:
                                 file_out.write(" M\n")
                             else:
@@ -190,7 +260,9 @@ def common_output(pdb_file, dssp_file, dssp2_file, stride_file,sst_file,bturn_fi
                                 file_out.write(" M\n")
                             else:
                                 file_out.write(" G\n")
-                        elif i+1 in x_pos_bbulge :
+                        else:
+                            file_out.write("\n")"""
+                        """elif i+1 in x_pos_bbulge :
                             if i+1 in twice:
                                 file_out.write(" M\n")
                             else:
@@ -204,9 +276,7 @@ def common_output(pdb_file, dssp_file, dssp2_file, stride_file,sst_file,bturn_fi
                             if i+1 in twice:
                                 file_out.write(" M\n")
                             else:
-                                file_out.write(" L\n")
-                        else:
-                            file_out.write("\n")
+                                file_out.write(" L\n")"""
 
                         if k in compare_dssp_stride :
                             Remarque1=Remarque1+"Remark #1 pos:{} chain:{} DSSP:{}  Stride:{}\n".format(aa_pos[k],chain_ID_seq[k],aa_seq[k],aa_seq_stride[k])
@@ -222,9 +292,9 @@ def common_output(pdb_file, dssp_file, dssp2_file, stride_file,sst_file,bturn_fi
                     
                     else:
                         
-                        file_out.write(" {} {} {} {} {} {} {}".format(aa_pos[k], chain_ID_seq[k], aa_seq[k], dssp_struct_seq[k],
-                                                             dssp2_struct_seq[k], stride_struct_seq[k], promotif_struct_seq[k]))
-                        if i+1 in aa_pos_bturn :
+                        file_out.write(" {} {} {} {} {} {} {} {} {} {} {} {} {}\n".format(writepos(aa_pos[k]), chain_ID_seq[k], aa_seq[k], dssp_struct_seq[k],
+                                                             dssp2_struct_seq[k], stride_struct_seq[k], promotif_struct_seq[k],bturn_list[k],bturntype_list[k],gturn_list[k],gturntype_list[k],aturn_list[k],aturntype_list[k]))
+                        """if i+1 in aa_pos_bturn :
                             if i+1 in twice:
                                 file_out.write("   M\n")
                             else:
@@ -234,6 +304,8 @@ def common_output(pdb_file, dssp_file, dssp2_file, stride_file,sst_file,bturn_fi
                                 file_out.write("   M\n")
                             else:
                                 file_out.write("   G\n")
+                        else:
+                            file_out.write("\n")
                         elif i+1 in x_pos_bbulge :
                             if i+1 in twice:
                                 file_out.write("   M\n")
@@ -248,9 +320,8 @@ def common_output(pdb_file, dssp_file, dssp2_file, stride_file,sst_file,bturn_fi
                             if i+1 in twice:
                                 file_out.write("   M\n")
                             else:
-                                file_out.write("   L\n")
-                        else:
-                            file_out.write("\n")
+                                file_out.write("   L\n")"""
+                        
                     i+=1
                     #print("i=" +str(i))
         for i in range(len(aa_pos_bturn)+1):
@@ -262,7 +333,7 @@ def common_output(pdb_file, dssp_file, dssp2_file, stride_file,sst_file,bturn_fi
             if (i%3==0 and i!=0):
                Remarque6=Remarque6+"Remark #6 gamma-turn chain : {} pos : {}-{}-{} sequence : {} type: {}\n".format(chain_ID_gturn[(i//3)-1],aa_pos_gturn[i-3],aa_pos_gturn[i-2],aa_pos_gturn[i-1],
                                                                                                                             gturn_sequence[(i//3)-1],gturn_type[(i//3)-1])
-        print(len(x_pos_bbulge))
+        #print(len(x_pos_bbulge))
         """for i in range(len(x_pos_bbulge)):
                Remarque7=Remarque7+"Remark #7 beta-bulges chain : {} pos-x: {} pos1-2 : {}-{} sequence-x : {} sequence1-2 : {}-{} type: {}\n".format(
                     chain_ID_bbulge[i],x_pos_bbulge[i],first_pos_bbulge[i],second_pos_bbulge[i],x_seq_bbulge[i],first_seq_bbulge[i],second_seq_bbulge[i],bbluge_type[i])
@@ -347,11 +418,64 @@ def main1():
     parser = argparse.ArgumentParser()
     parser.add_argument("-i", type=single_word)
 
-    parser.add_argument("-c",dest ="chain",choices = len("chain")==5)
+    parser.add_argument("-c","--chain",action="store",dest ="chain")
     
     args = parser.parse_args()
+        
     print(args)
-    print(args.c)
 
-main()
-exit(0)
+    # Directory 
+    directory = args.i[0]+"/"+args.i[0:2]+"/"+args.i[0:-4]+"/"+"result"
+
+    # Parent Directory path 
+    parent_dir = os.getcwd()
+
+    # Path 
+    path = os.path.join(parent_dir, directory)
+    try: 
+        if not os.path.exists(path):
+            os.makedirs(path)
+            print ("Successfully created the directory %s" % path)
+
+    except OSError as error: 
+        print(error)
+        
+
+
+    os.system("pwd")
+    os.chdir(args.i[0]+"/"+args.i[0:2]+"/"+args.i[0:-4])
+    os.system("pwd")
+
+    #lancement dssp
+    os.system ("mkdssp -i ../../../"+ args.i[0:-4]+".pdb -o "+args.i[0:-4]+".dssp")
+
+    #lancement stride
+    os.system ("stride ../../../"+ args.i[0:-4]+".pdb -f"+args.i[0:-4]+".stride")
+
+    #lancement promotif
+    os.system ("promotif.scr ../../../"+ args.i[0:-4]+".pdb")
+
+    #lancement dssppII
+    os.system ("perl ../../../dssppII_new.pl ../../../"+ args.i[0:-4]+".pdb > "+ args.i[0:-4]+".dssp2")
+
+    print(args.i[0:-4])
+
+    pdb_file = "../../../"+ args.i[0:-4]+".pdb"
+    dssp_file = args.i[0:-4] + ".dssp"
+    dssp2_file =  args.i[0:-4] + ".dssp2"
+    stride_file =  args.i[0:-4] + ".stride"
+    sst_file =  args.i[0:-4] + ".sst"
+    bturn_file =  args.i[0:-4]+ ".bturns"
+    gturn_file =  args.i[0:-4] + ".gturns"
+    bbulge_file =  args.i[0:-4] + ".blg"
+
+    if (args.chain):
+        common_output_chain(args.chain,pdb_file, dssp_file, dssp2_file, stride_file, sst_file, bturn_file, gturn_file, bbulge_file,args) 
+    else:
+        common_output(pdb_file, dssp_file, dssp2_file, stride_file, sst_file, bturn_file, gturn_file, bbulge_file,args) 
+
+
+try:
+    main1()
+except Exception as e:
+    raise e

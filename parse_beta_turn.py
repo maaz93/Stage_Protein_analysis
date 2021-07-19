@@ -1,3 +1,6 @@
+from missing_residues import *
+from ressources import *
+
 def parse_promotif_bturn(bturn_file,args):
 	bturn_sequence = []
 	aa_pos = []
@@ -16,7 +19,7 @@ def parse_promotif_bturn(bturn_file,args):
 				
 
 	#writting sequences in format file
-	bturn_parsed_file = "result/"+"Output_bturn_"+args[1]+".txt"
+	bturn_parsed_file = "result/"+"Output_bturn_"+args.i[0:-4]+".txt"
 	with open(bturn_parsed_file,"w+") as file_out:
 		file_out.write("> {} PARSED\n\n".format(bturn_file))
 		file_out.write("            Postion                  Chain     Sequence\n")
@@ -25,6 +28,45 @@ def parse_promotif_bturn(bturn_file,args):
 	print(bturn_type)
 	return bturn_sequence, aa_pos , bturn_type,chain_ID
 
+#pour trouver les debut et fin de chaines et leur positions
+def find_chains_bturn(aa_pos,chain_id):
+	if len(aa_pos)==len(chain_id)*4:
+		result=[]
+		result.append(chain_id[0])
+		result.append(aa_pos[0])
+
+		#chaine actuelle
+		chaine=chain_id[0]
+
+		for i in range (1,len(chain_id)):
+			if chain_id[i]!=chain_id[i-1]:
+				result.append(aa_pos[4*i -1])
+				result.append(chain_id[i])
+				result.append(aa_pos[4*i])
+		result.append(aa_pos[len(aa_pos)-1])
+		return result
+	else:
+		return "length not equal"
+
+#pour trouver les debut et fin de chaines et leur positions EN PYTHON
+def find_chains_index_bturn(aa_pos,chain_id):
+	if len(aa_pos)==len(chain_id)*4:
+		result=[]
+		result.append(chain_id[0])
+		result.append(0)
+
+		#chaine actuelle
+		chaine=chain_id[0]
+
+		for i in range (1,len(chain_id)):
+			if chain_id[i]!=chain_id[i-1]:
+				result.append(4*i -1)
+				result.append(chain_id[i])
+				result.append(4*i)
+		result.append(len(aa_pos)-1)
+		return result
+	else:
+		return "length not equal"
 
 Angles_typeIV=[[-120.0,130.0,55.0,41.0],
 				[-85.0,-15.0,-125.0,55.0],
@@ -56,12 +98,60 @@ def find_real_index(chain_id,position,aa_pos,aa_pos_index):
 def recup_new_bturns(bturn_sequence, aa_pos_bturn ,bturn_type,chain_ID,phi,psi,aa_pos_entier,aa_pos_index):
 	new_bturns=[]
 	for i in range(len(bturn_type)):
-		if bturn_type[i] =="IV  ":
+		if bturn_type[i].rstrip() =="IV":
 			pos=find_real_index(chain_ID[i],aa_pos_bturn[4*i],aa_pos_entier,aa_pos_index)
 			new_bturns.append(bturn_type_IV([phi[pos+1],psi[pos+1],phi[pos+2],psi[pos+2]]))
 	return new_bturns
 
 	
+
+def getlistbturn(aa_pos_decoupee_w_miss, aa_pos_decoupee_bturn,bturn_type_decoupee,new_bturns, missing_seq,missing_seq_chain,chain_debut_fin_index,chain_debut_fin_bturn):
+	x=0
+	i=0
+	bturn_list=[]
+	btype_list=[]
+	trouvee=False
+
+	for a in range(len(aa_pos_decoupee_w_miss)):
+		chaine_actuelle=chain_debut_fin_index[a*3]
+
+		try:
+			index_bturn = chain_debut_fin_bturn.index(chaine_actuelle)//3
+		except ValueError:
+			index_bturn =-1
+			
+		for b in range(len(aa_pos_decoupee_w_miss[a])):
+			if find_if_missing(chaine_actuelle,aa_pos_decoupee_w_miss[a][b],missing_seq,missing_seq_chain)==True :
+				pass
+			else:
+				if index_bturn != -1 :
+					if aa_pos_decoupee_bturn[index_bturn].count(aa_pos_decoupee_w_miss[a][b]) > 0 :
+						bturn_list.append(aa_pos_decoupee_bturn[index_bturn].count(aa_pos_decoupee_w_miss[a][b]))
+
+						for c in range(len(aa_pos_decoupee_bturn[index_bturn])//4):
+							if aa_pos_decoupee_bturn[index_bturn][c*4]== aa_pos_decoupee_w_miss[a][b]:
+								if bturn_type_decoupee[index_bturn][c].rstrip()=="IV":
+									btype_list.append(BTURN_IV[new_bturns[x]])
+									x+=1
+								else:
+									btype_list.append(BTURN[bturn_type_decoupee[index_bturn][c].rstrip()])
+								trouvee=True
+						if trouvee == False : 
+							btype_list.append(" 0")
+						trouvee=False
+					else:
+						bturn_list.append("0")
+						btype_list.append(" 0")
+				else:
+					bturn_list.append("0")
+					btype_list.append(" 0")
+				i+=1
+
+	return bturn_list,btype_list
+
+
+
+
 """def main():
 		bturn_file = "1oip.bturns"
 		btun_sequence, aa_pos,bturn_type = parse_promotif_bturn(bturn_file,["","1oip"])
